@@ -291,16 +291,16 @@
       background: var(--text); color: #fff;
       font-size: 13px; font-weight: 500; line-height: 1.55; text-align: left;
       box-shadow: var(--shadow);
-      opacity: 0; visibility: hidden; transform: translate(-50%, 4px);
+      opacity: 0; visibility: hidden; transform: translate(calc(-50% + var(--shift, 0px)), 4px);
       transition: opacity .15s, transform .15s, visibility .15s;
       pointer-events: none; white-space: normal;
     }
     .tip::after {
-      content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%);
+      content: ""; position: absolute; left: calc(50% - var(--shift, 0px)); top: 100%; transform: translateX(-50%);
       border: 6px solid transparent; border-top-color: var(--text);
     }
     .term:hover .tip, .term:focus-visible .tip, .term[aria-expanded="true"] .tip {
-      opacity: 1; visibility: visible; transform: translate(-50%, 0);
+      opacity: 1; visibility: visible; transform: translate(calc(-50% + var(--shift, 0px)), 0);
     }
     .term-hint { margin: 12px 0 0; color: var(--text-muted); font-size: 13px; }
     .term-hint span { border-bottom: 2px dotted var(--gm-mid); }
@@ -886,6 +886,22 @@
           terms.forEach((t) => t.setAttribute("aria-expanded", "false"));
           term.setAttribute("aria-expanded", String(!open));
         });
+      });
+
+      /* 설명 상자가 화면 밖으로 나가지 않도록 좌우 위치 보정 */
+      function fitTip(term) {
+        const tip = $(".tip", term);
+        if (!tip) return;
+        tip.style.setProperty("--shift", "0px");
+        const r = tip.getBoundingClientRect();
+        const pad = 12;
+        let shift = 0;
+        if (r.left < pad) shift = pad - r.left;
+        else if (r.right > window.innerWidth - pad) shift = window.innerWidth - pad - r.right;
+        tip.style.setProperty("--shift", shift + "px");
+      }
+      terms.forEach((term) => {
+        ["mouseenter", "focus", "click"].forEach((ev) => term.addEventListener(ev, () => fitTip(term)));
       });
       document.addEventListener("click", () => terms.forEach((t) => t.setAttribute("aria-expanded", "false")));
       document.addEventListener("keydown", (e) => {
